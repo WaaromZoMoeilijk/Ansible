@@ -1,5 +1,6 @@
 - name: Configure I2C and install Oled drivers Uctronic
-  hosts: oled
+  hosts: localhost
+  connection: local
   become: true
   tasks:
     - name: Update package lists
