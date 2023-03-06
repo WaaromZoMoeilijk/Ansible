@@ -1,0 +1,92 @@
+---
+- name: Update and upgrade all packages on any distro
+  hosts: localhost
+  connection: local
+  become: true
+
+  tasks:
+    - name: Check package manager
+      shell: |
+        if [ -x "$(command -v apt-get)" ]; then
+          echo "apt"
+        elif [ -x "$(command -v apk)" ]; then
+          echo "apk"
+        elif [ -x "$(command -v yum)" ]; then
+          echo "yum"
+        elif [ -x "$(command -v dnf)" ]; then
+          echo "dnf"
+        elif [ -x "$(command -v pkg)" ]; then
+          echo "pkg"
+        else
+          echo "unknown"
+        fi
+      register: pkg_mgr
+
+    - name: Update package cache
+      apt:
+        update_cache: yes
+      when: pkg_mgr.stdout == "apt"
+
+    - name: Upgrade packages
+      apt:
+        upgrade: dist
+        autoremove: yes
+        force_apt_get: yes
+        assume_yes: yes
+      when: pkg_mgr.stdout == "apt"
+
+    - name: Update package cache
+      apk:
+        update_cache: yes
+      when: pkg_mgr.stdout == "apk"
+
+    - name: Upgrade packages
+      apk:
+        upgrade: yes
+        force: yes
+        cache_valid_time: 0
+      when: pkg_mgr.stdout == "apk"
+
+    - name: Update package cache
+      yum:
+        update_cache: yes
+      when: pkg_mgr.stdout == "yum"
+
+    - name: Upgrade packages
+      yum:
+        name: "*"
+        state: latest
+        update_cache: yes
+        exclude: kernel*
+        security: yes
+        autoremove: yes
+        assume_yes: yes
+      when: pkg_mgr.stdout == "yum"
+
+    - name: Update package cache
+      dnf:
+        update_cache: yes
+      when: pkg_mgr.stdout == "dnf"
+
+    - name: Upgrade packages
+      dnf:
+        name: "*"
+        state: latest
+        update_cache: yes
+        exclude: kernel*
+        security: yes
+        autoremove: yes
+        assume_yes: yes
+      when: pkg_mgr.stdout == "dnf"
+
+    - name: Update package cache
+      pkg:
+        state: cache
+      when: pkg_mgr.stdout == "pkg"
+
+    - name: Upgrade packages
+      pkg:
+        state: latest
+        update_cache: yes
+        assume_yes: yes
+      when: pkg_mgr.stdout == "pkg"
