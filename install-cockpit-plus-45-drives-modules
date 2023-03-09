@@ -1,0 +1,52 @@
+---
+- name: Install Cockpit modules from 45 Drives GitHub
+  hosts: localhost
+  become: yes
+
+  vars:
+    cockpit_git_repo: "https://github.com/45Drives/cockpit"
+    cockpit_modules:
+      - name: "cockpit-zfs"
+        version: "master"
+        path: "/usr/share/cockpit"
+      - name: "cockpit-s.M.A.R.T."
+        version: "master"
+        path: "/usr/share/cockpit"
+      - name: "cockpit-storaged"
+        version: "master"
+        path: "/usr/share/cockpit"
+      - name: "cockpit-pool-mgmt"
+        version: "master"
+        path: "/usr/share/cockpit"
+
+  tasks:
+    - name: Install Git
+      apt:
+        name: git
+        state: present
+
+    - name: Clone Cockpit repository from 45 Drives GitHub
+      git:
+        repo: "{{ cockpit_git_repo }}"
+        dest: "/tmp/cockpit"
+        version: "{{ cockpit_modules[0].version }}"
+        depth: 1
+
+    - name: Install Cockpit dependencies
+      apt:
+        name:
+          - cockpit
+          - cockpit-networkmanager
+          - cockpit-dashboard
+          - cockpit-system
+          - cockpit-machines
+          - cockpit-ws
+        state: present
+
+    - name: Install Cockpit modules
+      git:
+        repo: "{{ cockpit_git_repo }}"
+        dest: "{{ item.path }}/{{ item.name }}"
+        version: "{{ item.version }}"
+        depth: 1
+      with_items: "{{ cockpit_modules }}"
