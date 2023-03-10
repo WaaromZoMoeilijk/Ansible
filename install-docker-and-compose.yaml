@@ -14,7 +14,7 @@
       when: ansible_pkg_mgr == 'dnf' or ansible_pkg_mgr == 'yum' or ansible_pkg_mgr == 'apk' or ansible_pkg_mgr == 'apt'
 
     - name: Download and install Docker
-      shell: curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
+      shell: curl -fsSL https://get.docker.com | bash
       args:
         warn: false
         executable: /bin/bash
