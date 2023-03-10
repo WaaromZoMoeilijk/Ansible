@@ -13,21 +13,26 @@
         state: present
       when: ansible_pkg_mgr == 'dnf' or ansible_pkg_mgr == 'yum' or ansible_pkg_mgr == 'apk' or ansible_pkg_mgr == 'apt'
 
-    - name: Download and install Docker
+    - name: Check if Docker is installed
+      command: docker --version
+      register: docker_version
+      ignore_errors: true
+
+    - name: Install Docker
       shell: curl -fsSL https://get.docker.com | bash
       args:
         warn: false
         executable: /bin/bash
-      when: ansible_pkg_mgr == 'dnf' or ansible_pkg_mgr == 'yum' or ansible_pkg_mgr == 'apk' or ansible_pkg_mgr == 'apt'
+      when: ansible_pkg_mgr == 'dnf' or ansible_pkg_mgr == 'yum' or ansible_pkg_mgr == 'apk' and docker_version.rc != 0
 
     - name: Install Docker
       apt:
         name: docker.io
         state: latest
-      when: ansible_pkg_mgr == 'apt'
+      when: ansible_pkg_mgr == 'apt' and docker_version.rc != 0
 
     - name: Install Docker Compose
-      shell: curl -sSL https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose && chmod +x /usr/local/bin/docker-compose
+      shell: curl -sSL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-$(uname -m) -o /usr/bin/docker-compose && chmod +x /usr/bin/docker-compose
       args:
         warn: false
         executable: /bin/bash
@@ -37,3 +42,4 @@
         name: docker
         state: started
         enabled: true
+      when: docker_version.rc != 0
