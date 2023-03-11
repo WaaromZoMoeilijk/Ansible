@@ -1,0 +1,48 @@
+---
+- name: Install and configure Zabbix agent
+  hosts: zabbix-clients
+  become: yes
+
+  vars:
+    zabbix_server_ip: "zabbix.w-solutions.dev"
+    zabbix_agent_hostname: "workhub.w-solutions.dev"
+
+  tasks:
+    - name: Remove zabbix release package if it already exists
+      file:
+        path: /tmp/zabbix-release.deb
+        state: absent
+
+    - name: Download Zabbix release package
+      get_url:
+        url: "https://repo.zabbix.com/zabbix/6.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_6.0-4%2Bubuntu22.04_all.deb"
+        dest: /tmp/zabbix-release.deb
+
+    - name: Install Zabbix release package
+      apt:
+        deb: /tmp/zabbix-release.deb
+
+    - name: Update package cache
+      apt:
+        update_cache: yes
+
+    - name: Install Zabbix agent and sender
+      apt:
+        name: ['zabbix-agent', 'zabbix-sender']
+        state: present
+
+    - name: Configure Zabbix agent
+      lineinfile:
+        path: /etc/zabbix/zabbix_agentd.conf
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+      loop:
+        - { regexp: '^Server=.*$', line: "Server={{ zabbix_server_ip }}" }
+        - { regexp: '^ServerActive=.*$', line: "ServerActive={{ zabbix_server_ip }}" }
+        - { regexp: '^Hostname=.*$', line: "Hostname={{ zabbix_agent_hostname }}" }
+
+    - name: Start and enable Zabbix agent
+      systemd:
+        name: zabbix-agent
+        state: started
+        enabled: yes
