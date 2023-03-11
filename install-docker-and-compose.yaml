@@ -1,6 +1,6 @@
 ---
 - name: Install Docker and Docker Compose
-  hosts: localhost
+  hosts: all
   become: true
 
   tasks:
@@ -14,7 +14,7 @@
       when: ansible_pkg_mgr == 'dnf' or ansible_pkg_mgr == 'yum' or ansible_pkg_mgr == 'apk' or ansible_pkg_mgr == 'apt'
 
     - name: Check if Docker is installed
-      command: docker --version
+      command: docker --version && echo 0 || echo 1
       register: docker_version
       ignore_errors: true
 
@@ -34,7 +34,6 @@
     - name: Install Docker Compose
       shell: curl -sSL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-$(uname -m) -o /usr/bin/docker-compose && chmod +x /usr/bin/docker-compose
       args:
-        warn: false
         executable: /bin/bash
 
     - name: Start Docker service
